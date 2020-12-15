@@ -3,7 +3,7 @@ package com.juanma.ecommerce.model;
 import javax.persistence.*;
 
 @Entity
-public class Staff {
+public class Stuff {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long sid;
@@ -12,6 +12,7 @@ public class Staff {
     private double price;
     private String photoPath;
     @ManyToOne
+    @JoinColumn(name="user_uid")
     private User user;
 
     public long getSid() {

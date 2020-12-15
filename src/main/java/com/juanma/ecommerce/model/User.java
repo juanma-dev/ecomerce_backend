@@ -9,10 +9,11 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long uid;
     private String uname;
+    private String password;
     private String email;
     private String photoPath;
     @OneToMany(mappedBy = "user", fetch=FetchType.EAGER)
-    List<Staff> staffs;
+    List<Stuff> stuffs;
 
     public long getUid() {
         return uid;
@@ -46,11 +47,19 @@ public class User {
         this.photoPath = photoPath;
     }
 
-    public List<Staff> getStaffs() {
-        return staffs;
+    public List<Stuff> getStuffs() {
+        return stuffs;
     }
 
-    public void setStaffs(List<Staff> staffs) {
-        this.staffs = staffs;
+    public void setStuffs(List<Stuff> stuffs) {
+        this.stuffs = stuffs;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }
