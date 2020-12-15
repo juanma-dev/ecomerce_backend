@@ -1,14 +1,11 @@
 package com.juanma.ecommerce.controller;
 
-import com.juanma.ecommerce.model.Stuff;
-import com.juanma.ecommerce.model.StuffRepository;
-import com.juanma.ecommerce.model.User;
-import com.juanma.ecommerce.model.UserRepository;
+import com.juanma.ecommerce.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,21 +17,21 @@ public class EcommerceController {
     @Autowired
     StuffRepository stuffRepository;
 
-    @GetMapping("/user/{uid}")
-    public List<Stuff> getUserStaffs(@PathVariable("uid") long uid) {
-        List<Stuff> stuffs = new ArrayList<Stuff>();
-        Optional<User> user = repository.findById(uid);
-        user.ifPresent((u)-> stuffs.addAll(u.getStuffs()));
-        return stuffs;
+    @GetMapping("/user/{uid:\\d+}")
+    public Optional<User> getUser(@PathVariable("uid") long uid) {
+        return repository.findById(uid);
+    }
+    @GetMapping("/user/{uname:[^\\d]+}")
+    public Optional<User> getUserByName(@PathVariable("uname") String uname) {
+        return repository.findByUname(uname);
     }
 
-    @PostMapping("/user/{uid}")
-    public String putUser(@PathVariable("uid") long uid, @RequestBody Stuff stuff) {
-        Optional<User> optUser = repository.findById(uid);
-        User user = optUser.orElseThrow(InvalidParameterException::new);
-        user.getStuffs().add(stuff);
-        repository.save(user);
-        return "STUFFS UPDATED";
+    @GetMapping("/user/{uid:\\d+}/stuffs")
+    public List<Stuff> getUserStaffs(@PathVariable("uid") long uid) {
+        List<Stuff> stuffs = new ArrayList<>();
+        Optional<User> user = repository.findById(uid);
+        user.ifPresent((u)-> stuffs.addAll( u.getStuffs()));
+        return stuffs;
     }
 
     /*
@@ -53,6 +50,15 @@ public class EcommerceController {
         return optUser.isPresent() ? "USER UPDATED" : "USER CREATED";
     }
 
+    @DeleteMapping("/user/{uid}")
+    public String deleteUser(@PathVariable("uid") long uid) {
+        if (repository.existsById(uid)) {
+            repository.deleteById(uid);
+            return "USER DELETED";
+        }
+        return "INVALID USER ID";
+    }
+
     /*
     {
         "sid": 1,
@@ -64,10 +70,20 @@ public class EcommerceController {
     }
     * */
     @PostMapping("/stuff")
-    public String putUser(@RequestBody Stuff stuff) {
+    public String putStuff(@RequestBody Stuff stuff) {
         Optional<Stuff> optStuff = stuffRepository.findById(stuff.getSid());
         stuffRepository.save(stuff);
         return optStuff.isPresent() ? "STUFF UPDATED" : "STUFF CREATED";
     }
+
+    @DeleteMapping("/stuff/{sid}")
+    public String deleteStuff(@PathVariable("sid") long sid) {
+        if (stuffRepository.existsById(sid)) {
+            stuffRepository.deleteById(sid);
+            return "STUFF DELETED";
+        }
+        return "INVALID STUFF ID";
+    }
+
 
 }

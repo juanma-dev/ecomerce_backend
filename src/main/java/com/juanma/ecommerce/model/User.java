@@ -1,5 +1,7 @@
 package com.juanma.ecommerce.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.util.List;
 
@@ -12,8 +14,15 @@ public class User {
     private String password;
     private String email;
     private String photoPath;
-    @OneToMany(mappedBy = "user", fetch=FetchType.EAGER)
+    @OneToMany(mappedBy = "user")
+    @JsonIgnore() // Avoiding Recursive JSON response
     List<Stuff> stuffs;
+    @ManyToMany(fetch=FetchType.EAGER)
+    @JoinTable(
+            name = "authority_user",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "authority_id"))
+    List<Authority> authorities;
 
     public long getUid() {
         return uid;
@@ -61,5 +70,13 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public List<Authority> getAuthorities() {
+        return authorities;
+    }
+
+    public void setAuthorities(List<Authority> authorities) {
+        this.authorities = authorities;
     }
 }

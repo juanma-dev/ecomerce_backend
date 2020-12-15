@@ -1,5 +1,7 @@
 package com.juanma.ecommerce.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 
 @Entity
@@ -13,6 +15,7 @@ public class Stuff {
     private String photoPath;
     @ManyToOne
     @JoinColumn(name="user_uid")
+    @JsonIgnore() // Avoiding Recursive JSON response
     private User user;
 
     public long getSid() {
