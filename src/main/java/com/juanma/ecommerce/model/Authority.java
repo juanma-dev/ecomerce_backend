@@ -1,5 +1,7 @@
 package com.juanma.ecommerce.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.util.List;
 
@@ -10,6 +12,7 @@ public class Authority {
     private long aid;
     private String aname;
     @ManyToMany
+    @JsonIgnore() // Avoiding Recursive JSON response
     private List<User> users;
 
     public Authority() {}

@@ -2,8 +2,15 @@ package com.juanma.ecommerce.controller;
 
 import com.juanma.ecommerce.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,12 +19,18 @@ import java.util.Optional;
 @RestController()
 @RequestMapping("/ecommerce")
 public class EcommerceController {
+
     @Autowired
     UserRepository repository;
     @Autowired
     StuffRepository stuffRepository;
+    @Autowired
+    PasswordEncoder passwordEncoder;
+    @Autowired
+    UploadFileService uploadFileService;
 
     @GetMapping("/user/{uid:\\d+}")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public Optional<User> getUser(@PathVariable("uid") long uid) {
         return repository.findById(uid);
     }
@@ -27,6 +40,7 @@ public class EcommerceController {
     }
 
     @GetMapping("/user/{uid:\\d+}/stuffs")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public List<Stuff> getUserStaffs(@PathVariable("uid") long uid) {
         List<Stuff> stuffs = new ArrayList<>();
         Optional<User> user = repository.findById(uid);
@@ -43,14 +57,35 @@ public class EcommerceController {
         "photoPath": "/my/path"
     }
     * */
-    @PostMapping("/user")
+    /*@PostMapping("/user")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public String putUser(@RequestBody User user) {
         Optional<User> optUser = repository.findById(user.getUid());
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        repository.save(user);
+        return optUser.isPresent() ? "USER UPDATED" : "USER CREATED";
+    }*/
+    @PostMapping("/user")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    public String putUser(@RequestParam("uid") long uid,
+                          @RequestParam("uname") String uname,
+                          @RequestParam("password") String password,
+                          @RequestParam("email") String email,
+                          @RequestParam("files") MultipartFile file) {
+        User user = new User();
+        user.setUid(uid);
+        user.setUname(uname);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setEmail(email);
+        user.setPhotoPath(uploadFileService.uploadUserPhoto(uid, file));
+
+        Optional<User> optUser = repository.findById(uid);
         repository.save(user);
         return optUser.isPresent() ? "USER UPDATED" : "USER CREATED";
     }
 
     @DeleteMapping("/user/{uid}")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public String deleteUser(@PathVariable("uid") long uid) {
         if (repository.existsById(uid)) {
             repository.deleteById(uid);
@@ -70,6 +105,7 @@ public class EcommerceController {
     }
     * */
     @PostMapping("/stuff")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public String putStuff(@RequestBody Stuff stuff) {
         Optional<Stuff> optStuff = stuffRepository.findById(stuff.getSid());
         stuffRepository.save(stuff);
@@ -77,12 +113,21 @@ public class EcommerceController {
     }
 
     @DeleteMapping("/stuff/{sid}")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
     public String deleteStuff(@PathVariable("sid") long sid) {
         if (stuffRepository.existsById(sid)) {
             stuffRepository.deleteById(sid);
             return "STUFF DELETED";
         }
         return "INVALID STUFF ID";
+    }
+
+    @PostMapping("/{uid}/upload")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    public String uploadUserPhoto(@PathVariable("uid") long uid,
+                                  @RequestParam("files") MultipartFile file) {
+        uploadFileService.uploadUserPhoto(uid, file);
+        return "File Uploaded";
     }
 
 
