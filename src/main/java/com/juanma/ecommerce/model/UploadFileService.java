@@ -43,13 +43,13 @@ public class UploadFileService {
         try {
             if (!Files.exists(dirPath)) { Files.createDirectory(dirPath); }
             for (int i=0; i<files.length; i++) {
-                String extension = files[i].getName().replaceFirst(EXTENSION_REGEX, "");
+                String extension = files[i].getOriginalFilename().replaceFirst(EXTENSION_REGEX, "");
                 Path filePath = Paths.get(ROOT_PATH_STUFFS, String.valueOf(sid), STUFF_PIC_TAG+i+extension);
                 Files.write(filePath, files[i].getBytes());
                 photosPath.add(filePath.toString());
             }
         } catch (IOException e) {
-            throw new RuntimeException("Bad stuff pic");
+            throw new RuntimeException(e);
         }
         return photosPath;
     }

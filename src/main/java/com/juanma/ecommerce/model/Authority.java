@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 public class Authority {
@@ -13,10 +14,14 @@ public class Authority {
     private String aname;
     @ManyToMany
     @JsonIgnore() // Avoiding Recursive JSON response
-    private List<User> users;
+    @JoinTable(
+            name = "authority_user",
+            joinColumns = @JoinColumn(name = "authority_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private Set<User> users;
 
     public Authority() {}
-    public Authority(long aid, String aname, List<User> users) {
+    public Authority(String aname, Set<User> users) {
         this.aid = aid;
         this.aname = aname;
         this.users = users;
@@ -38,11 +43,11 @@ public class Authority {
         this.aname = aname;
     }
 
-    public List<User> getUsers() {
+    public Set<User> getUsers() {
         return users;
     }
 
-    public void setUsers(List<User> users) {
+    public void setUsers(Set<User> users) {
         this.users = users;
     }
 }

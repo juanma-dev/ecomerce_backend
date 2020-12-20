@@ -32,7 +32,7 @@ public class JpaEcommerceUserDao implements EcommerceUserDao{
                 ));
     }
 
-    private Set<SimpleGrantedAuthority> getGrantedAuthorities(List<Authority> authorities) {
+    private Set<SimpleGrantedAuthority> getGrantedAuthorities(Set<Authority> authorities) {
         return authorities.stream()
                 .map(authority -> new SimpleGrantedAuthority(authority.getAname()))
                 .collect(Collectors.toSet());

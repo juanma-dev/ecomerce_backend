@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidParameterException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController()
 @RequestMapping("/ecommerce")
@@ -28,6 +29,8 @@ public class EcommerceController {
     UploadFileService uploadFileService;
     @Autowired
     PhotosRepository photosRepository;
+    @Autowired
+    AuthorityRepo authorityRepo;
 
     @GetMapping("/user/{uid:\\d+}")
     @PreAuthorize("hasAuthority('ROLE_USER')")
@@ -71,16 +74,18 @@ public class EcommerceController {
                           @RequestParam("uname") String uname,
                           @RequestParam("password") String password,
                           @RequestParam("email") String email,
-                          @RequestParam("files") MultipartFile file) {
+                          @RequestParam("file") MultipartFile file,
+                          @RequestParam("authorities") String authorities){
         User user = new User();
         user.setUid(uid);
         user.setUname(uname);
         user.setPassword(passwordEncoder.encode(password));
         user.setEmail(email);
         user.setPhotoPath(uploadFileService.uploadUserPhoto(uid, file));
-
         Optional<User> optUser = repository.findById(uid);
         repository.save(user);
+        user.setAuthorities(boundAuthorities(authorities, user));
+
         return optUser.isPresent() ? "USER UPDATED" : "USER CREATED";
     }
 
@@ -155,5 +160,18 @@ public class EcommerceController {
         return "File Uploaded";
     }
 
+    private Set<Authority> boundAuthorities(String authorities, User user) {
+        authorities = authorities
+                        .replaceAll("\\s", "")
+                        .toUpperCase();
+        String[] auths = authorities.split(",");
+        return Arrays.stream(auths).map(aname -> {
+            Authority authority = authorityRepo.findByAname("ROLE_" + aname);
+            authority.getUsers().add(user);
+            authorityRepo.save(authority);
+            return authority;
+        }).collect(Collectors.toSet());
+
+    }
 
 }

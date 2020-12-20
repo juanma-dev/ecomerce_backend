@@ -32,7 +32,7 @@ public class EcommerceUser implements UserDetails {
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
+    public Set<? extends GrantedAuthority> getAuthorities() {
         return grantedAuthorities;
     }
 
