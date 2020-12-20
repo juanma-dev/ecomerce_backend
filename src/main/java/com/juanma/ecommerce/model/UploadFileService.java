@@ -21,9 +21,9 @@ public class UploadFileService {
     private final String EXTENSION_REGEX = ".+(?=\\.[^\\.]+$)";
 
     public String uploadUserPhoto(long uid, MultipartFile file) {
-        String extension = file.getName().replaceFirst(EXTENSION_REGEX, "");
+        String extension = file.getOriginalFilename().replaceFirst(EXTENSION_REGEX, "");
         Path dirPath = Paths.get(ROOT_PATH_USERS, String.valueOf(uid));
-        Path filePath = Paths.get(ROOT_PATH_USERS, String.valueOf(uid), USER_PIC_TAG, extension);
+        Path filePath = Paths.get(ROOT_PATH_USERS, String.valueOf(uid), USER_PIC_TAG+extension);
 
         try {
             if (!Files.exists(dirPath)) {
@@ -31,7 +31,7 @@ public class UploadFileService {
             }
             Files.write(filePath, file.getBytes());
         } catch (IOException e) {
-            throw new RuntimeException("Bad user pic");
+            throw new RuntimeException(e);
         }
         return filePath.toString();
     }
@@ -44,7 +44,7 @@ public class UploadFileService {
             if (!Files.exists(dirPath)) { Files.createDirectory(dirPath); }
             for (int i=0; i<files.length; i++) {
                 String extension = files[i].getName().replaceFirst(EXTENSION_REGEX, "");
-                Path filePath = Paths.get(ROOT_PATH_STUFFS, String.valueOf(sid), STUFF_PIC_TAG+i, extension);
+                Path filePath = Paths.get(ROOT_PATH_STUFFS, String.valueOf(sid), STUFF_PIC_TAG+i+extension);
                 Files.write(filePath, files[i].getBytes());
                 photosPath.add(filePath.toString());
             }

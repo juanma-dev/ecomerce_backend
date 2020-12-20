@@ -3,6 +3,7 @@ package com.juanma.ecommerce.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 public class Stuff {
@@ -12,11 +13,12 @@ public class Stuff {
     private String sname;
     private String category;
     private double price;
-    private String photoPath;
     @ManyToOne
     @JoinColumn(name="user_uid")
     @JsonIgnore() // Avoiding Recursive JSON response
     private User user;
+    @OneToMany(mappedBy = "stuff")
+    List<StuffPhoto> photos;
 
     public long getSid() {
         return sid;
@@ -48,14 +50,6 @@ public class Stuff {
 
     public void setPrice(double price) {
         this.price = price;
-    }
-
-    public String getPhotoPath() {
-        return photoPath;
-    }
-
-    public void setPhotoPath(String photoPath) {
-        this.photoPath = photoPath;
     }
 
     public User getUser() {

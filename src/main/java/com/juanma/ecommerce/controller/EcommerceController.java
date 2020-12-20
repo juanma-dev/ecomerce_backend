@@ -11,10 +11,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.security.InvalidParameterException;
+import java.util.*;
 
 @RestController()
 @RequestMapping("/ecommerce")
@@ -28,6 +26,8 @@ public class EcommerceController {
     PasswordEncoder passwordEncoder;
     @Autowired
     UploadFileService uploadFileService;
+    @Autowired
+    PhotosRepository photosRepository;
 
     @GetMapping("/user/{uid:\\d+}")
     @PreAuthorize("hasAuthority('ROLE_USER')")
@@ -104,13 +104,38 @@ public class EcommerceController {
         "user": { "uid": 1 }
     }
     * */
-    @PostMapping("/stuff")
+    /*@PostMapping("/stuff")
     @PreAuthorize("hasAuthority('ROLE_USER')")
     public String putStuff(@RequestBody Stuff stuff) {
         Optional<Stuff> optStuff = stuffRepository.findById(stuff.getSid());
         stuffRepository.save(stuff);
         return optStuff.isPresent() ? "STUFF UPDATED" : "STUFF CREATED";
+    }*/
+    @PostMapping("/stuff")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    public String putStuff(@RequestParam("sid") long sid,
+                           @RequestParam("sname") String sname,
+                           @RequestParam("category") String category,
+                           @RequestParam("price") double price,
+                           @RequestParam("files") MultipartFile[] files,
+                           @RequestParam("uid") long uid) {
+        Stuff stuff = new Stuff();
+        stuff.setSid(sid);
+        stuff.setSname(sname);
+        stuff.setCategory(category);
+        stuff.setPrice(price);
+        stuff.setUser(repository.findById(uid).orElseThrow(InvalidParameterException::new));
+        Set<String> photos = uploadFileService.uploadStuffPhotos(sid, files);
+        photos.stream().forEach(path -> {
+           StuffPhoto stuffPhoto = new StuffPhoto(path, stuff);
+           photosRepository.save(stuffPhoto);
+        });
+
+        Optional<Stuff> optStuff = stuffRepository.findById(sid);
+        stuffRepository.save(stuff);
+        return optStuff.isPresent() ? "STUFF UPDATED" : "STUFF CREATED";
     }
+
 
     @DeleteMapping("/stuff/{sid}")
     @PreAuthorize("hasAuthority('ROLE_USER')")
