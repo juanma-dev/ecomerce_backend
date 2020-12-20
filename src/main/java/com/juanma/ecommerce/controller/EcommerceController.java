@@ -83,9 +83,8 @@ public class EcommerceController {
         user.setEmail(email);
         user.setPhotoPath(uploadFileService.uploadUserPhoto(uid, file));
         Optional<User> optUser = repository.findById(uid);
+        user.setAuthorities(boundAuthorities(authorities));
         repository.save(user);
-        user.setAuthorities(boundAuthorities(authorities, user));
-
         return optUser.isPresent() ? "USER UPDATED" : "USER CREATED";
     }
 
@@ -160,15 +159,13 @@ public class EcommerceController {
         return "File Uploaded";
     }
 
-    private Set<Authority> boundAuthorities(String authorities, User user) {
+    private Set<Authority> boundAuthorities(String authorities) {
         authorities = authorities
                         .replaceAll("\\s", "")
                         .toUpperCase();
         String[] auths = authorities.split(",");
         return Arrays.stream(auths).map(aname -> {
             Authority authority = authorityRepo.findByAname("ROLE_" + aname);
-            authority.getUsers().add(user);
-            authorityRepo.save(authority);
             return authority;
         }).collect(Collectors.toSet());
 
