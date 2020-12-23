@@ -16,6 +16,7 @@ public class StuffPhoto {
     @JsonIgnore() // Avoiding Recursive JSON response
     private Stuff stuff;
 
+    public StuffPhoto(){}
     public StuffPhoto(String photoPath, Stuff stuff) {
         this.photoPath = photoPath;
         this.stuff = stuff;

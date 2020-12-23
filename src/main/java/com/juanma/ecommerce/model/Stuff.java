@@ -17,7 +17,7 @@ public class Stuff {
     @JoinColumn(name="user_uid")
     @JsonIgnore() // Avoiding Recursive JSON response
     private User user;
-    @OneToMany(mappedBy = "stuff")
+    @OneToMany(mappedBy = "stuff", fetch=FetchType.EAGER)
     List<StuffPhoto> photos;
 
     public long getSid() {
@@ -58,5 +58,13 @@ public class Stuff {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public List<StuffPhoto> getPhotos() {
+        return photos;
+    }
+
+    public void setPhotos(List<StuffPhoto> photos) {
+        this.photos = photos;
     }
 }

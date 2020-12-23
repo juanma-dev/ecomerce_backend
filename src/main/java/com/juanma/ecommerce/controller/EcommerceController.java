@@ -2,11 +2,19 @@ package com.juanma.ecommerce.controller;
 
 import com.juanma.ecommerce.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -70,7 +78,7 @@ public class EcommerceController {
     }*/
     @PostMapping("/user")
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public String putUser(@RequestParam("uid") long uid,
+    public ResponseEntity<Object> putUser(@RequestParam("uid") long uid,
                           @RequestParam("uname") String uname,
                           @RequestParam("password") String password,
                           @RequestParam("email") String email,
@@ -85,7 +93,9 @@ public class EcommerceController {
         Optional<User> optUser = repository.findById(uid);
         user.setAuthorities(boundAuthorities(authorities));
         repository.save(user);
-        return optUser.isPresent() ? "USER UPDATED" : "USER CREATED";
+        return new ResponseEntity<>(
+                optUser.isPresent() ? "USER UPDATED" : "USER CREATED",
+                HttpStatus.OK);
     }
 
     @DeleteMapping("/user/{uid}")
@@ -117,7 +127,7 @@ public class EcommerceController {
     }*/
     @PostMapping("/stuff")
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public String putStuff(@RequestParam("sid") long sid,
+    public ResponseEntity<Object> putStuff(@RequestParam("sid") long sid,
                            @RequestParam("sname") String sname,
                            @RequestParam("category") String category,
                            @RequestParam("price") double price,
@@ -129,15 +139,18 @@ public class EcommerceController {
         stuff.setCategory(category);
         stuff.setPrice(price);
         stuff.setUser(repository.findById(uid).orElseThrow(InvalidParameterException::new));
+        Optional<Stuff> optStuff = stuffRepository.findById(sid);
+        stuffRepository.save(stuff);
+
         Set<String> photos = uploadFileService.uploadStuffPhotos(sid, files);
         photos.stream().forEach(path -> {
            StuffPhoto stuffPhoto = new StuffPhoto(path, stuff);
            photosRepository.save(stuffPhoto);
         });
 
-        Optional<Stuff> optStuff = stuffRepository.findById(sid);
-        stuffRepository.save(stuff);
-        return optStuff.isPresent() ? "STUFF UPDATED" : "STUFF CREATED";
+        return new ResponseEntity<>(
+                optStuff.isPresent() ? "STUFF UPDATED" : "STUFF CREATED",
+                HttpStatus.OK);
     }
 
 
@@ -151,12 +164,44 @@ public class EcommerceController {
         return "INVALID STUFF ID";
     }
 
-    @PostMapping("/{uid}/upload")
+    @GetMapping("/users/{uid:[\\d]+}/{img_name}")
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public String uploadUserPhoto(@PathVariable("uid") long uid,
-                                  @RequestParam("files") MultipartFile file) {
-        uploadFileService.uploadUserPhoto(uid, file);
-        return "File Uploaded";
+    public ResponseEntity<Resource> getUserImage(@PathVariable("uid") long uid,
+                                                   @PathVariable("img_name") String imageName) {
+        Path path = Paths.get(String.format(uploadFileService.getUserPathFormat(),uid, imageName));
+
+        HttpHeaders header = new HttpHeaders();
+        header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + path.getFileName());
+        header.add("Cache-Control", "no-cache, no-store, must-revalidate");
+        header.add("Pragma", "no-cache");
+        header.add("Expires", "0");
+
+        FileSystemResource resource = new FileSystemResource(path);
+        return ResponseEntity.ok()
+                .headers(header)
+                .contentLength(path.toFile().length())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+
+    @GetMapping("/stuffs/{sid:[\\d]+}/{img_name}")
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    public ResponseEntity<Resource> getStuffImages(@PathVariable("sid") long sid,
+                                                   @PathVariable("img_name") String imageName) {
+        Path path = Paths.get(String.format(uploadFileService.getStuffPathFormat(),sid, imageName));
+
+        HttpHeaders header = new HttpHeaders();
+        header.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + path.getFileName());
+        header.add("Cache-Control", "no-cache, no-store, must-revalidate");
+        header.add("Pragma", "no-cache");
+        header.add("Expires", "0");
+
+        FileSystemResource resource = new FileSystemResource(path);
+        return ResponseEntity.ok()
+                .headers(header)
+                .contentLength(path.toFile().length())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
     }
 
     private Set<Authority> boundAuthorities(String authorities) {
@@ -165,7 +210,8 @@ public class EcommerceController {
                         .toUpperCase();
         String[] auths = authorities.split(",");
         return Arrays.stream(auths).map(aname -> {
-            Authority authority = authorityRepo.findByAname("ROLE_" + aname);
+            Authority authority = authorityRepo.findByAname("ROLE_" + aname)
+                    .orElseThrow(InvalidParameterException::new);
             return authority;
         }).collect(Collectors.toSet());
 

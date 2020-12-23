@@ -2,6 +2,8 @@ package com.juanma.ecommerce.model;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 public interface AuthorityRepo extends JpaRepository<Authority, Long> {
-    public Authority findByAname(String aname);
+    Optional<Authority> findByAname(String aname);
 }
